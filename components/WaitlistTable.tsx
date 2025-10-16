@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { WaitlistUser } from "@/lib/supabase";
 import { Check, Mail, Search, Users, Calendar } from "lucide-react";
+
+// WaitlistUser interface matching your backend API
+interface WaitlistUser {
+  id: number;
+  email: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface WaitlistTableProps {
   onUserSelect: (users: WaitlistUser[]) => void;
@@ -27,21 +34,69 @@ export default function WaitlistTable({
   const fetchUsers = async (search = "") => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        ...(search && { search }),
-      });
+      // Your backend API endpoint
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      let endpoint = `${apiUrl}/api/v1/waitlist`;
 
-      const response = await fetch(`/api/waitlist?${params}`);
-      const data = await response.json();
+      // Add search parameter if provided
+      if (search && search.trim()) {
+        endpoint += `?search=${encodeURIComponent(search.trim())}`;
+      }
+
+      console.log("Fetching users from:", endpoint);
+
+      let response;
+      let data;
+
+      try {
+        // Try external API first
+        response = await fetch(endpoint, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        data = await response.json();
+        console.log("External API Response:", data);
+      } catch (externalError) {
+        console.log("External API failed, trying Next.js API:", externalError);
+
+        // Fallback to Next.js API
+        const fallbackEndpoint = `/api/waitlist${
+          search ? `?search=${encodeURIComponent(search)}` : ""
+        }`;
+        response = await fetch(fallbackEndpoint);
+        data = await response.json();
+        console.log("Next.js API Response:", data);
+      }
 
       if (response.ok) {
-        setUsers(data.users);
-        setPagination({ total: data.total });
+        let users = [];
+        let total = 0;
+
+        // Handle different response formats
+        if (data.success && data.data && data.data.users) {
+          // External API format
+          users = data.data.users;
+          total = data.data.count || users.length;
+        } else if (data.users) {
+          // Next.js API format
+          users = data.users;
+          total = data.total || users.length;
+        }
+
+        setUsers(users);
+        setPagination({ total: users.length });
+        console.log(`Successfully loaded ${users.length} users`);
       } else {
-        console.error("Failed to fetch users:", data.error);
+        console.error("Failed to fetch users:", data.message || data.error);
+        setUsers([]);
+        setPagination({ total: 0 });
       }
     } catch (error) {
       console.error("Error fetching users:", error);
+      setUsers([]);
+      setPagination({ total: 0 });
     } finally {
       setLoading(false);
     }
@@ -145,6 +200,12 @@ export default function WaitlistTable({
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created At
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Updated At
               </th>
             </tr>
           </thead>

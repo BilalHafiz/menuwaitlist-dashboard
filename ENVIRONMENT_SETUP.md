@@ -9,6 +9,10 @@ The build error occurs because environment variables are not set. Here's how to 
 Create a file named `.env.local` in your project root directory (same level as `package.json`):
 
 ```env
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:3001
+
+# Supabase Configuration (if still using)
 NEXT_PUBLIC_SUPABASE_URL=https://izjnryuoujzfxjyptnli.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 ```

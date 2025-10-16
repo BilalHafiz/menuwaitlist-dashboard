@@ -20,4 +20,5 @@ export interface WaitlistUser {
   email: string;
   created_at: string;
   updated_at: string;
+  // Add any other fields that your API returns
 }
