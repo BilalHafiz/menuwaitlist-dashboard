@@ -45,6 +45,14 @@ export default function SignupPage() {
     }
 
     try {
+      if (!supabase) {
+        setError(
+          "Supabase not configured. Please check your environment variables."
+        );
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,

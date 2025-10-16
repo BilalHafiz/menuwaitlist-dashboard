@@ -3,12 +3,9 @@ import { supabaseAdmin, WaitlistUser } from "@/lib/supabase";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if environment variables are set
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
-    ) {
-      console.error("Missing Supabase environment variables");
+    // Check if Supabase is properly configured
+    if (!supabaseAdmin) {
+      console.error("Supabase not configured");
       return NextResponse.json(
         {
           error: "Supabase configuration missing",
@@ -16,6 +13,7 @@ export async function GET(request: NextRequest) {
             "Please check your .env.local file and ensure all Supabase variables are set",
           environment: {
             hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+            hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
             hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
           },
         },
