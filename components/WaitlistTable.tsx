@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Mail, Search, Users, Calendar } from "lucide-react";
+import { Check, Mail, Search, Users } from "lucide-react";
 
 // WaitlistUser interface matching your backend API
 interface WaitlistUser {
@@ -34,9 +34,8 @@ export default function WaitlistTable({
   const fetchUsers = async (search = "") => {
     setLoading(true);
     try {
-      // Your backend API endpoint
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      let endpoint = `${apiUrl}/api/v1/waitlist`;
+      // Use Next.js API endpoint directly
+      let endpoint = `/api/waitlist`;
 
       // Add search parameter if provided
       if (search && search.trim()) {
@@ -45,44 +44,27 @@ export default function WaitlistTable({
 
       console.log("Fetching users from:", endpoint);
 
-      let response;
-      let data;
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      try {
-        // Try external API first
-        response = await fetch(endpoint, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        data = await response.json();
-        console.log("External API Response:", data);
-      } catch (externalError) {
-        console.log("External API failed, trying Next.js API:", externalError);
-
-        // Fallback to Next.js API
-        const fallbackEndpoint = `/api/waitlist${
-          search ? `?search=${encodeURIComponent(search)}` : ""
-        }`;
-        response = await fetch(fallbackEndpoint);
-        data = await response.json();
-        console.log("Next.js API Response:", data);
-      }
+      const data = await response.json();
+      console.log("API Response:", data);
 
       if (response.ok) {
+        // Handle the response data
         let users = [];
         let total = 0;
 
-        // Handle different response formats
-        if (data.success && data.data && data.data.users) {
-          // External API format
-          users = data.data.users;
-          total = data.data.count || users.length;
-        } else if (data.users) {
-          // Next.js API format
+        if (data.users) {
           users = data.users;
           total = data.total || users.length;
+        } else if (data.data && data.data.users) {
+          users = data.data.users;
+          total = data.data.count || users.length;
         }
 
         setUsers(users);
@@ -128,16 +110,6 @@ export default function WaitlistTable({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-sm border">
       <div className="p-6 border-b">
@@ -147,9 +119,6 @@ export default function WaitlistTable({
             <h2 className="text-xl font-semibold text-gray-900">
               Waitlist Users
             </h2>
-            <span className="bg-primary-100 text-primary-800 text-sm px-2 py-1 rounded-full">
-              {pagination.total} total
-            </span>
           </div>
 
           <form onSubmit={handleSearch} className="flex items-center space-x-2">
@@ -201,18 +170,12 @@ export default function WaitlistTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created At
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Updated At
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center">
+                <td colSpan={2} className="px-6 py-12 text-center">
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
                     <span className="ml-2 text-gray-600">Loading users...</span>
@@ -222,7 +185,7 @@ export default function WaitlistTable({
             ) : users.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={2}
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   No users found
@@ -253,12 +216,6 @@ export default function WaitlistTable({
                           {user.email}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(user.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(user.updated_at)}
                     </td>
                   </tr>
                 );

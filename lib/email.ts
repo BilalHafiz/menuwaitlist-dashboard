@@ -8,17 +8,17 @@ interface EmailOptions {
 
 export async function sendEmail({ to, subject, html }: EmailOptions) {
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || "587"),
+    host: "smtp.gmail.com", // ✅ Correct Gmail SMTP host
+    port: 587,
     secure: false,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: process.env.EMAIL_USER, // ✅ SMTP Gmail account
+      pass: process.env.EMAIL_PASS, // ✅ App password
     },
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: process.env.EMAIL_FROM, // ✅ Can be same as EMAIL_USER or delegated
     to,
     subject,
     html,
@@ -38,16 +38,20 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
 
 export function generateTestFlightEmailHTML(
   recipientName: string,
-  testFlightLink: string,
+  testFlightLink?: string,
   customMessage?: string
 ): string {
+  // Determine if this is a TestFlight invitation or custom message
+  const isTestFlight = testFlightLink && testFlightLink.trim();
+  const isCustomMessage = customMessage && customMessage.trim();
+
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>TestFlight Invitation</title>
+      <title>${isTestFlight ? "TestFlight Invitation" : "Message"}</title>
       <style>
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -89,37 +93,49 @@ export function generateTestFlightEmailHTML(
     </head>
     <body>
       <div class="header">
-        <h1>🚀 TestFlight Invitation</h1>
-        <p>You're invited to test our app!</p>
+        <h1>${isTestFlight ? "🚀 TestFlight Invitation" : "📧 Message"}</h1>
+        <p>${
+          isTestFlight
+            ? "You're invited to test our app!"
+            : "You have a new message"
+        }</p>
       </div>
       
       <div class="content">
         <h2>Hello ${recipientName || "there"}!</h2>
         
-        <p>Great news! You've been selected to participate in our app's beta testing program.</p>
-        
-        ${customMessage ? `<p><em>"${customMessage}"</em></p>` : ""}
-        
-        <p>To get started:</p>
-        <ol>
-          <li>Click the button below to join TestFlight</li>
-          <li>Install the TestFlight app if you haven't already</li>
-          <li>Download and test our app</li>
-          <li>Share your feedback with us!</li>
-        </ol>
-        
-        <div style="text-align: center;">
-          <a href="${testFlightLink}" class="cta-button">
-            Join TestFlight
-          </a>
-        </div>
-        
-        <p><strong>What to expect:</strong></p>
-        <ul>
-          <li>Early access to new features</li>
-          <li>Ability to provide feedback directly to our team</li>
-          <li>Help shape the future of our app</li>
-        </ul>
+        ${
+          isTestFlight
+            ? `
+          <p>Great news! You've been selected to participate in our app's beta testing program.</p>
+          
+          <p>To get started:</p>
+          <ol>
+            <li>Click the button below to join TestFlight</li>
+            <li>Install the TestFlight app if you haven't already</li>
+            <li>Download and test our app</li>
+            <li>Share your feedback with us!</li>
+          </ol>
+          
+          <div style="text-align: center;">
+            <a href="${testFlightLink}" class="cta-button">
+              Join TestFlight
+            </a>
+          </div>
+          
+          <p><strong>What to expect:</strong></p>
+          <ul>
+            <li>Early access to new features</li>
+            <li>Ability to provide feedback directly to our team</li>
+            <li>Help shape the future of our app</li>
+          </ul>
+        `
+            : `
+          <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #007AFF;">
+            <p style="margin: 0; font-size: 16px; line-height: 1.6;">${customMessage}</p>
+          </div>
+        `
+        }
         
         <p>If you have any questions or need help, just reply to this email!</p>
         
@@ -127,7 +143,11 @@ export function generateTestFlightEmailHTML(
       </div>
       
       <div class="footer">
-        <p>This is a beta testing invitation. Please do not share this link publicly.</p>
+        <p>${
+          isTestFlight
+            ? "This is a beta testing invitation. Please do not share this link publicly."
+            : "This message was sent to you from our waitlist system."
+        }</p>
       </div>
     </body>
     </html>
