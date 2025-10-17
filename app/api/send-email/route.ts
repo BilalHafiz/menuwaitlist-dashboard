@@ -59,6 +59,12 @@ export async function POST(request: NextRequest) {
         successful: successCount,
         failed: failureCount,
       },
+      emailDetails: {
+        subject: defaultSubject,
+        customMessage: customMessage || null,
+        testFlightLink: testFlightLink,
+        recipientCount: emails.length,
+      },
     });
   } catch (error) {
     console.error("Email sending error:", error);

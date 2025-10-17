@@ -68,6 +68,28 @@ export function generateTestFlightEmailHTML(
           text-align: center;
           border-radius: 10px 10px 0 0;
         }
+        .logo {
+          width: 80px;
+          height: 80px;
+          background: #6B7C32;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 20px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .logo-icon {
+          font-size: 40px;
+          color: white;
+        }
+        .logo-text {
+          color: white;
+          font-size: 18px;
+          font-weight: bold;
+          letter-spacing: 1px;
+          margin-top: 10px;
+        }
         .content {
           background: #f8f9fa;
           padding: 30px;
@@ -89,6 +111,14 @@ export function generateTestFlightEmailHTML(
           color: #666;
           font-size: 14px;
         }
+        .custom-message {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          border-left: 4px solid #007AFF;
+          margin: 20px 0;
+          white-space: pre-line;
+        }
       </style>
     </head>
     <body>
@@ -107,6 +137,14 @@ export function generateTestFlightEmailHTML(
         ${
           isTestFlight
             ? `
+          ${
+            isCustomMessage
+              ? `
+          <div class="custom-message">
+            ${customMessage}
+          </div>
+          `
+              : `
           <p>Great news! You've been selected to participate in our app's beta testing program.</p>
           
           <p>To get started:</p>
@@ -116,6 +154,8 @@ export function generateTestFlightEmailHTML(
             <li>Download and test our app</li>
             <li>Share your feedback with us!</li>
           </ol>
+          `
+          }
           
           <div style="text-align: center;">
             <a href="${testFlightLink}" class="cta-button">
@@ -123,16 +163,22 @@ export function generateTestFlightEmailHTML(
             </a>
           </div>
           
+          ${
+            !isCustomMessage
+              ? `
           <p><strong>What to expect:</strong></p>
           <ul>
             <li>Early access to new features</li>
             <li>Ability to provide feedback directly to our team</li>
             <li>Help shape the future of our app</li>
           </ul>
+          `
+              : ""
+          }
         `
             : `
-          <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #007AFF;">
-            <p style="margin: 0; font-size: 16px; line-height: 1.6;">${customMessage}</p>
+          <div class="custom-message">
+            ${customMessage}
           </div>
         `
         }
